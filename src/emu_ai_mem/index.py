@@ -126,7 +126,8 @@ def rebuild_index(
         else:
             positions_to_embed.append(position)
 
-    if positions_to_embed and os.environ.get("EMU_MEM_DISABLE_EMBEDDINGS") != "1":
+    embeddings_enabled = embedder is not None or os.environ.get("EMU_MEM_DISABLE_EMBEDDINGS") != "1"
+    if positions_to_embed and embeddings_enabled:
         texts = [
             (
                 f"passage: {parsed[position][2].project}\n"
