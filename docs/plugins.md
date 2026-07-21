@@ -13,7 +13,7 @@ Add this repository as a Codex marketplace, install `emu-ai-mem`, then start a n
 and review/trust the plugin hooks when prompted:
 
 ```bash
-codex plugin marketplace add https://github.com/emu479p01/emu-ai-mem
+codex plugin marketplace add emu479p01/emu-ai-mem
 codex plugin add emu-ai-mem@emu-ai-mem
 ```
 
@@ -38,4 +38,3 @@ emu-mem install generic --project /path/to/project
 
 Reference the generated `.emu-ai-mem/AGENT_INSTRUCTIONS.md` from that agent's durable
 project guidance.
-

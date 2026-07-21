@@ -96,6 +96,10 @@ They never sync raw transcripts by default.
 
 See [docs/plugins.md](docs/plugins.md) for installation details.
 
+For complete onboarding instructions—including team owner setup, member N, device N,
+multiple teams, and multiple projects—see the
+[installation and team onboarding guide](docs/team-installation-guide.md).
+
 ## Development
 
 ```bash
