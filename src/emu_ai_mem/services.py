@@ -1,17 +1,17 @@
 from __future__ import annotations
 
-import json
 import shutil
 from pathlib import Path
 
 import frontmatter
 
-from .config import AppConfig, load_config
+from .config import AppConfig
 from .errors import RecordError
 from .gitops import commit_paths, is_pending, sync_vault
-from .index import rebuild_index, search_index
-from .paths import cache_dir, config_path, data_dir, index_path
+from .index import rebuild_index
+from .paths import cache_dir, config_path, data_dir, state_path
 from .records import MemoryRecord, create_record, split_body, string_list, write_record
+from .store import connect as connect_store
 from .vaults import resolve_vault
 
 
@@ -131,18 +131,18 @@ def migrate_legacy(
     return len(written), warnings
 
 
-GENERIC_INSTRUCTIONS = """# emu-ai-mem integration
+GENERIC_INSTRUCTIONS = """# emu-ai-mem v2 integration
 
-Before unfamiliar work, run `emu-mem search \"<topic>\"` and use relevant results as context.
+Use the bounded continuation capsule when one is supplied. Search on demand with
+`emu-mem search \"<topic>\"`; do not search every prompt.
 
-At natural checkpoints, save durable project facts or decisions with:
+Save an explicitly selected durable fact or decision with:
 
-`emu-mem note \"<durable fact or decision>\" --project <name> --tags <comma-separated>`
+`emu-mem remember --summary \"<durable fact or decision>\" --project <name> --kind <kind>`
 
-Use `emu-mem remember` when separate summary and details fields are useful.
-
-Use `emu-mem supersede <id> ...` instead of editing a synced memory file. Never copy raw
-transcripts or secrets into shared memory. Run `emu-mem doctor` when sync or configuration fails.
+Use `emu-mem supersede <id> ...` instead of editing an immutable event. Never copy raw
+transcripts or secrets into memory. Automatic checkpoints belong to a personal vault; publish a
+team handoff only with explicit user authorization. Run `emu-mem doctor` on failures.
 """
 
 
@@ -163,7 +163,21 @@ def doctor(config: AppConfig) -> tuple[bool, list[str]]:
     messages.append(f"config: {config_path()}")
     messages.append(f"data: {data_dir()}")
     messages.append(f"cache: {cache_dir()}")
-    messages.append(f"index: {index_path()}")
+    messages.append(f"database: {state_path()}")
+    try:
+        db = connect_store()
+        schema_version = db.execute("PRAGMA user_version").fetchone()[0]
+        queued = db.execute("SELECT count(*) FROM outbox").fetchone()[0]
+        semantic_queued = db.execute("SELECT count(*) FROM semantic_queue").fetchone()[0]
+        db.close()
+        messages.append(
+            f"database schema: {schema_version}; pending events: {queued}; "
+            f"semantic queue: {semantic_queued}"
+        )
+        healthy &= schema_version == 2
+    except Exception as exc:
+        messages.append(f"database: unhealthy: {exc}")
+        healthy = False
     if not config.vaults:
         messages.append("vaults: none configured")
         healthy = False
@@ -175,6 +189,8 @@ def doctor(config: AppConfig) -> tuple[bool, list[str]]:
             f"kind={vault.kind}; pending_push={'yes' if pending else 'no'}"
         )
         healthy &= repo_ok
+    if not any(vault.kind == "personal" for vault in config.vaults.values()):
+        messages.append("personal vault: missing; automatic session checkpoints are disabled")
     if not config.default_vault:
         messages.append("default vault: not set")
         healthy = False
@@ -184,40 +200,11 @@ def doctor(config: AppConfig) -> tuple[bool, list[str]]:
 
 
 def hook(event: str, stdin_text: str) -> tuple[int, str]:
-    """Client-neutral hook entrypoint. Never stores a raw transcript."""
-    try:
-        config = load_config()
-    except Exception as exc:
-        return 0, f"emu-ai-mem is not configured: {exc}"
+    """Deprecated v1 hook shim; v2 never searches on every user prompt."""
     if event == "session-start":
-        statuses = []
-        for vault in config.vaults.values():
-            try:
-                statuses.append(f"{vault.name}: {sync_vault(vault.name, vault.path)}")
-            except Exception as exc:
-                statuses.append(f"{vault.name}: sync warning: {exc}")
-        try:
-            rebuild_index(config)
-        except Exception as exc:
-            statuses.append(f"index warning: {exc}")
-        return 0, "emu-ai-mem ready. " + "; ".join(statuses)
+        return 0, "emu-ai-mem v2 ready; use the client-specific session-start hook."
     if event == "prompt":
-        try:
-            payload = json.loads(stdin_text or "{}")
-        except json.JSONDecodeError:
-            payload = {}
-        prompt = str(payload.get("prompt") or payload.get("user_prompt") or "").strip()
-        if not prompt:
-            return 0, ""
-        try:
-            results, _ = search_index(config, prompt, limit=3)
-            if not results:
-                return 0, ""
-            lines = ["Relevant emu-ai-mem context (verify before relying on it):"]
-            lines.extend(f"- [{item.vault}] {item.id}: {item.summary}" for item in results)
-            return 0, "\n".join(lines)
-        except Exception as exc:
-            return 0, f"emu-ai-mem search warning: {exc}"
+        return 0, ""
     if event in {"pre-compact", "stop"}:
         return 0, (
             "Before context is lost, save only durable facts or decisions with `emu-mem note`. "

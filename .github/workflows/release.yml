@@ -30,9 +30,13 @@ jobs:
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
           import os
-          import tomllib
+          import re
           from pathlib import Path
-          version = tomllib.loads(Path('pyproject.toml').read_text())['project']['version']
+          text = Path('src/emu_ai_mem/__init__.py').read_text()
+          match = re.search(r'__version__ = "([^"]+)"', text)
+          if not match:
+              raise SystemExit('Package version not found')
+          version = match.group(1)
           expected = f'v{version}'
           if os.environ['RELEASE_TAG'] != expected:
               raise SystemExit(f"Tag {os.environ['RELEASE_TAG']} does not match {expected}")

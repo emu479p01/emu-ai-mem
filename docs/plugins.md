@@ -1,76 +1,44 @@
-# Plugin installation
+# Plugins and client integrations
 
-Install the CLI first:
-
-```bash
-pipx install "git+https://github.com/emu479p01/emu-ai-mem.git@v0.2.0"
-emu-mem doctor
-```
+Install the v2 engine and configure a personal vault before enabling lifecycle hooks.
 
 ## Codex
 
-Add this repository as a Codex marketplace, install `emu-ai-mem`, then start a new task
-and review/trust the plugin hooks when prompted:
+Preview and install through the wizard:
 
-```bash
-codex plugin marketplace add emu479p01/emu-ai-mem
-codex plugin add emu-ai-mem@emu-ai-mem
+```text
+emu-mem setup --client codex --preview
+emu-mem setup --client codex
 ```
+
+The repo marketplace can also be added manually with `codex plugin marketplace add
+emu479p01/emu-ai-mem`, followed by `codex plugin add emu-ai-mem@emu-ai-mem`. Start a new task and
+review/trust the plugin hooks. The plugin bundles a local stdio MCP server and session lifecycle
+instructions.
 
 ## Claude Code
 
-```text
-/plugin marketplace add emu479p01/emu-ai-mem
-/plugin install emu-ai-mem@emu-ai-mem
-/reload-plugins
-```
+Run the commands printed by `emu-mem setup --client claude-code` inside Claude Code, reload
+plugins, and start a new session. Claude Code uses the dedicated Claude plugin bundle.
 
-When a new release changes the plugin, bump the version in `pyproject.toml`,
-`.claude-plugin/marketplace.json`, and `claude-plugins/emu-ai-mem/.claude-plugin/plugin.json`
-to the same value, then push the commit and tag it. On an existing installation, refresh and
-update the plugin explicitly:
+## Claude Desktop Chat
 
-```text
-/plugin marketplace update emu-ai-mem
-/plugin update emu-ai-mem@emu-ai-mem
-```
+`emu-mem setup --client claude-desktop` backs up and merges
+`claude_desktop_config.json`. Restart Claude Desktop and approve write tools when asked. This local
+connector does not make the engine reachable from Claude web or Cowork.
 
-`/reload-plugins` reloads the current cached plugin; it does not fetch a new marketplace
-version. Claude Code uses the plugin version as its cache key, so pushing new commits without
-changing the version does not trigger an update.
+## ChatGPT Chat/Work and Claude web/Cowork
 
-Plugins run `emu-mem hook` from PATH. `SessionStart` syncs configured vaults and
-rebuilds the local index. `UserPromptSubmit` retrieves up to three relevant summaries.
-`PreCompact` and `Stop` only remind the agent to persist durable context; they do not
-save raw transcripts.
+Deploy the HTTPS gateway and register its `/mcp` URL as a custom app/connector. The Codex local
+plugin does not embed a deployment-specific remote app ID: each self-hosted operator creates and
+approves that app in its workspace, then may associate it with a private plugin listing/template.
+See [gateway.md](gateway.md) and [surfaces.md](surfaces.md).
 
-Both plugins also start the bundled local stdio MCP server with `emu-mem mcp`. Ask the agent to
-"note this" or invoke `/emu-ai-mem:note` to call `note_memory`. MCP access uses the user-level
-emu-ai-mem configuration and is independent of the current project folder.
+## Lifecycle behavior
 
-## Claude Desktop normal chat
+Only `SessionStart`, `PreCompact`, and `Stop` are configured. There is no `UserPromptSubmit` search,
+so ordinary prompts do not pay a search/model/token cost. Stop requests at most one checkpoint retry
+per turn and never blocks forever.
 
-Install an absolute-path MCP entry in the per-user Claude Desktop configuration:
-
-```bash
-emu-mem install claude-desktop
-```
-
-Restart Claude Desktop, open Settings > Connectors, and enable `emu-ai-mem`. Then ask:
-
-```text
-Note this in my personal memory: future releases use AGPL v3; existing MIT releases remain MIT.
-```
-
-Claude should request approval for the `note_memory` write tool and report the vault, memory ID,
-and sync status. This local connector works only on the computer where the CLI and vaults are
-configured. It is not available to claude.ai web, Cowork, remote sessions, or mobile clients.
-
-## Other agents
-
-```bash
-emu-mem install generic --project /path/to/project
-```
-
-Reference the generated `.emu-ai-mem/AGENT_INSTRUCTIONS.md` from that agent's durable
-project guidance.
+Plugin version, Python package version, marketplace metadata, MCP tool schemas, and hook fixtures
+are validated together before release.

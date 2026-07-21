@@ -47,6 +47,15 @@ def index_path() -> Path:
     return cache_dir() / "index.db"
 
 
+def state_path() -> Path:
+    """Return the v2 operational database, which is never stored in a vault."""
+    return data_dir() / "state-v2.sqlite3"
+
+
+def gateway_dir() -> Path:
+    return data_dir() / "gateway"
+
+
 def pending_dir() -> Path:
     path = cache_dir() / "pending"
     path.mkdir(parents=True, exist_ok=True)

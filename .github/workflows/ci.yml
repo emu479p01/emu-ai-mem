@@ -28,7 +28,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
       - run: python -m pip install --upgrade pip
-      - run: python -m pip install -e ".[dev]"
+      - run: python -m pip install -e ".[dev,gateway]"
       - run: python -m pytest --cov=emu_ai_mem --cov-report=term-missing
 
   quality-and-package:
@@ -41,10 +41,11 @@ jobs:
           python-version: "3.11"
           cache: pip
       - run: python -m pip install --upgrade pip
-      - run: python -m pip install -e ".[dev]"
+      - run: python -m pip install -e ".[dev,gateway]"
       - run: python -m ruff check .
       - run: python -m mypy src/emu_ai_mem
       - run: python -m build
+      - run: python scripts/verify_versions.py
       - name: Validate plugin JSON and skill frontmatter
         shell: python
         run: |
@@ -63,3 +64,17 @@ jobs:
           path: dist/*
           if-no-files-found: error
           retention-days: 7
+
+  gateway-container:
+    name: Gateway container and vulnerability scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -f deploy/Dockerfile -t emu-ai-mem-gateway:test .
+      - uses: aquasecurity/trivy-action@0.30.0
+        with:
+          image-ref: emu-ai-mem-gateway:test
+          format: table
+          exit-code: "1"
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true

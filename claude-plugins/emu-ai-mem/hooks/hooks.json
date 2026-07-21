@@ -3,25 +3,13 @@
   "hooks": {
     "SessionStart": [
       {
-        "matcher": "startup|resume|compact",
+        "matcher": "startup|resume|clear|compact",
         "hooks": [
           {
             "type": "command",
             "command": "emu-mem hook session-start --client claude",
-            "timeout": 120,
-            "statusMessage": "Syncing emu-ai-mem vaults"
-          }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "emu-mem hook prompt --client claude",
-            "timeout": 120,
-            "statusMessage": "Searching emu-ai-mem"
+            "timeout": 15,
+            "statusMessage": "Loading emu-ai-mem session"
           }
         ]
       }

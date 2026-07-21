@@ -5,8 +5,9 @@ import subprocess
 from pathlib import Path
 
 from emu_ai_mem.config import AppConfig, VaultConfig
-from emu_ai_mem.installers import install_claude_desktop
+from emu_ai_mem.installers import install_claude_desktop, remove_claude_desktop
 from emu_ai_mem.services import install_generic, migrate_legacy
+from emu_ai_mem.setup_wizard import check_environment
 
 
 def test_generic_installer(tmp_path: Path) -> None:
@@ -39,6 +40,19 @@ def test_claude_desktop_installer_preserves_existing_servers(tmp_path: Path) -> 
         "command": str((tmp_path / "pipx" / "emu-mem.exe").resolve()),
         "args": ["mcp"],
     }
+    removed = remove_claude_desktop(config_file)
+    after = json.loads(removed.read_text(encoding="utf-8"))
+    assert "emu-ai-mem" not in after["mcpServers"]
+    assert after["mcpServers"]["existing"]["command"] == "existing-tool"
+    assert config_file.with_suffix(".json.bak").exists()
+
+
+def test_setup_check_does_not_create_state(tmp_path: Path, monkeypatch) -> None:
+    home = tmp_path / "check-only"
+    monkeypatch.setenv("EMU_MEM_HOME", str(home))
+    report = check_environment()
+    assert not report.healthy
+    assert not home.exists()
 
 
 def test_migrate_legacy_without_modifying_source(tmp_path: Path, monkeypatch) -> None:

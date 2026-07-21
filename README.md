@@ -1,128 +1,65 @@
-# emu-ai-mem
+# emu-ai-mem v2
 
-Git-backed, multi-vault memory for AI coding agents, small teams, and one person
-working across multiple machines. Markdown remains the source of truth; the local
-SQLite hybrid-search index is disposable and never committed.
+Session-first, local-first memory for AI agents. SQLite provides fast local resume and
+incremental FTS search; immutable event segments in private GitHub repositories provide
+multi-device/team replication and recovery. The SQLite database is never committed.
 
-## Highlights
+## What changed in v2
 
-- Mount separate personal and team Git repositories without mixing access boundaries.
-- Append-only memories with globally unique IDs and explicit `supersedes` history.
-- Automatic fetch/rebase/push with per-vault locking, retry, and offline pending state.
-- Multilingual keyword + semantic search across every mounted vault.
-- Plugins for Codex and Claude Code; a generic installer for other agents.
-- Local embeddings: memory content is not sent to an embedding API.
-
-Designed for 1–20 contributors per team vault. It is not a replacement for a
-central knowledge service at larger scale.
+- Sessions and bounded checkpoints are real entities, not Markdown categories.
+- Search never rebuilds an index or scans vault files on the hot path.
+- Session start loads at most one 600-token continuation capsule.
+- Prompt-by-prompt automatic search was removed.
+- Automatic checkpoints always use a personal vault. Team handoffs are explicit.
+- Local stdio MCP and a self-hosted OAuth remote MCP gateway expose the same core tools.
+- v1 Markdown is read-only migration input; v2 writes immutable JSONL events.
 
 ## Install
 
-Python 3.11 or 3.12 and Git are required.
+Choose the operating-system guide:
 
-```bash
-pipx install "git+https://github.com/emu479p01/emu-ai-mem.git@v0.2.0"
-emu-mem --version
+- [Windows](docs/install/windows.md)
+- [macOS](docs/install/macos.md)
+- [Linux](docs/install/linux.md)
+
+After installing the tagged release, run:
+
+```text
+emu-mem setup --check
+emu-mem setup
 ```
 
-Create an empty private GitHub repository for each personal or team memory vault,
-then connect it. emu-ai-mem deliberately does not create repositories or manage
-GitHub permissions.
+The wizard reports prerequisites and next actions without guessing a vault or trusting hooks
+on your behalf. See the [quick start](docs/quickstart.md), [surface matrix](docs/surfaces.md),
+[team guide](docs/team-installation-guide.md), and [gateway guide](docs/gateway.md).
 
-```bash
-emu-mem config set-identity --id emu479p01 --name "Chaiyaporn Santangjai"
-emu-mem vault add personal git@github.com:YOU/my-memory.git --kind personal --default
-emu-mem vault add team-acme git@github.com:ORG/team-memory.git --kind team
-emu-mem doctor
-```
+## Daily use
 
-## Use
-
-```bash
-emu-mem note "Use idempotency keys for charge creation" \
-  --project billing --tags decision,api --category decisions
-
-emu-mem remember --project billing --tags decision,api \
-  --summary "Use idempotency keys for charge creation" \
-  --details "Clients generate one UUID per attempted charge."
-
-emu-mem search "how do retries avoid duplicate charges"
-emu-mem search "การตัดสินใจเรื่อง payment" --vault team-acme
-
-emu-mem supersede <old-id> --project billing --tags decision \
-  --category decisions --summary "Updated retry policy" --details "..."
-
+```text
+emu-mem remember --vault personal --project billing --kind decision \
+  --summary "Use idempotency keys for charge creation"
+emu-mem search "duplicate charges"
+emu-mem session latest
 emu-mem sync
 ```
 
-`note` is the folder-independent shortcut for content the user explicitly selected. It uses
-`project=general` and `category=sessions` when those options are omitted, while still requiring an
-explicitly configured default vault or `--vault`.
+Plugins use `SessionStart`, `PreCompact`, and `Stop` hooks to resume/checkpoint where the
+client exposes lifecycle metadata. They never parse raw transcripts. Cloud Chat/Work/Cowork
+surfaces use the optional self-hosted gateway.
 
-Writes require an explicit default vault or `--vault`. Search uses all configured
-vaults by default and labels every result with its origin. Synced files are
-append-only; use `supersede` rather than editing history.
+## Vault and security model
 
-## Vault format
+Use a different private GitHub repository for every access boundary. A personal checkpoint
+is never silently copied into a team vault. `publish-handoff` creates a new sanitized team
+event with checkpoint provenance.
 
-Every memory repository contains `.emu-ai-mem.toml` and one Markdown file per entry:
-
-```text
-memory-repo/
-├── .emu-ai-mem.toml
-└── memories/
-    ├── projects/
-    ├── sessions/
-    └── decisions/
-```
-
-The repository is the access-control boundary. A `personal` folder inside a team
-repository would still be readable by the team, so personal and team data must use
-different repositories.
-
-## Existing ai-mem data
-
-Connect a destination vault first, then import without modifying the source files:
-
-```bash
-emu-mem migrate /path/to/old-ai-mem --vault personal
-```
-
-Each imported record receives a v1 ID and a `legacy-id:*` tag. Verify the remote
-before deleting the old files.
-
-## Agent integrations
-
-- Codex marketplace: `.agents/plugins/marketplace.json`
-- Claude Code marketplace: `.claude-plugin/marketplace.json`
-- Other agents: `emu-mem install generic --project /path/to/project`
-
-For folder-independent access from the normal Claude Desktop chat, install the user-wide local
-MCP entry and restart Claude Desktop:
-
-```bash
-emu-mem install claude-desktop
-```
-
-The local MCP server exposes `note_memory`, `search_memory`, `supersede_memory`, `sync_memory`,
-`list_vaults`, and `doctor_memory`. It runs over stdio on the same computer and does not expose a
-network port. Claude.ai web and mobile cannot connect to this local server.
-
-Plugins call the installed `emu-mem` executable. They sync at session start,
-retrieve relevant context for prompts, and remind the agent to save durable facts.
-They never sync raw transcripts by default.
-
-See [docs/plugins.md](docs/plugins.md) for installation details.
-
-For complete onboarding instructions—including team owner setup, member N, device N,
-multiple teams, and multiple projects—see the
-[installation and team onboarding guide](docs/team-installation-guide.md).
+Local state, SQLite, model caches, OAuth tokens, vault clones, and pending markers live in
+platform user directories and must not be committed to this Engine repository. The gateway
+encrypts GitHub tokens with an operator-provided key and rejects public vault repositories.
 
 ## Development
 
-```bash
-python -m venv .venv
-# activate .venv
+```text
 python -m pip install -e ".[dev]"
 pytest
 ruff check .
@@ -130,16 +67,7 @@ mypy src/emu_ai_mem
 python -m build
 ```
 
-The default semantic model is
-`sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` (384 dimensions).
-Changing the model or dimension requires `emu-mem reindex`.
+Semantic search is optional: install `emu-ai-mem[semantic]`. Gateway deployments install
+`emu-ai-mem[gateway]`.
 
-## Security and privacy
-
-- Repository permissions are enforced by GitHub/Git, not by emu-ai-mem metadata.
-- Credentials remain in the user's existing Git credential manager or SSH agent.
-- Config, clones, indexes, locks, and pending markers live in platform user directories.
-- Plugins may put selected memory summaries into agent context; only mount vaults whose
-  content is appropriate for that agent session.
-
-Licensed under the [MIT License](LICENSE).
+Licensed under the MIT License.

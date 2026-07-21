@@ -56,7 +56,7 @@ def connect(path: Path | None = None) -> sqlite3.Connection:
 
 @lru_cache(maxsize=2)
 def _embedding_model(model_name: str) -> Any:
-    from fastembed import TextEmbedding
+    from fastembed import TextEmbedding  # type: ignore[import-not-found]
 
     return TextEmbedding(model_name=model_name)
 

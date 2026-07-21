@@ -9,7 +9,7 @@
       "name": "emu-ai-mem",
       "source": "./claude-plugins/emu-ai-mem",
       "description": "Shared, Git-backed memory for Claude Code sessions and small teams",
-      "version": "0.2.1",
+      "version": "2.0.0",
       "category": "productivity",
       "tags": ["memory", "git", "team", "multilingual"]
     }

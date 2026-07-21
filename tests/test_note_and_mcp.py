@@ -14,6 +14,7 @@ from emu_ai_mem.errors import ConfigurationError
 from emu_ai_mem.mcp_server import note_memory
 from emu_ai_mem.records import MemoryRecord
 from emu_ai_mem.services import note
+from emu_ai_mem.store import connect
 from emu_ai_mem.vaults import add_vault
 
 
@@ -55,9 +56,14 @@ def test_note_memory_returns_provenance(app_home: Path, bare_remote: Path) -> No
     assert result["ok"] is True
     assert result["vault"] == "team"
     assert result["project"] == "engine"
-    assert result["sync"] == "synced"
+    assert result["sync"] == "queued"
     memory_id = str(result["memory_id"])
-    assert (config.vaults["team"].path / "memories" / "decisions" / f"{memory_id}.md").exists()
+    db = connect()
+    try:
+        assert db.execute("SELECT 1 FROM memories WHERE id=?", (memory_id,)).fetchone()
+        assert db.execute("SELECT 1 FROM outbox").fetchone()
+    finally:
+        db.close()
 
 
 def test_stdio_mcp_lists_folder_independent_tools(app_home: Path) -> None:
@@ -76,9 +82,13 @@ def test_stdio_mcp_lists_folder_independent_tools(app_home: Path) -> None:
                 response = await session.list_tools()
                 names = {tool.name for tool in response.tools}
                 assert names == {
+                    "checkpoint_session",
                     "doctor_memory",
+                    "get_session_context",
                     "list_vaults",
                     "note_memory",
+                    "publish_handoff",
+                    "remember_memory",
                     "search_memory",
                     "supersede_memory",
                     "sync_memory",

@@ -21,7 +21,7 @@ def validate_vault_name(name: str) -> str:
 
 
 def manifest_text(name: str, kind: str) -> str:
-    return f'schema_version = 1\nname = "{name}"\nkind = "{kind}"\ndefault_branch = "main"\n'
+    return f'schema_version = 2\nname = "{name}"\nkind = "{kind}"\ndefault_branch = "main"\n'
 
 
 def read_manifest(path: Path) -> dict[str, object]:
@@ -32,7 +32,7 @@ def read_manifest(path: Path) -> dict[str, object]:
         raw = tomllib.loads(manifest.read_text(encoding="utf-8"))
     except tomllib.TOMLDecodeError as exc:
         raise VaultError(f"Invalid vault manifest: {exc}") from exc
-    if raw.get("schema_version") != 1 or raw.get("kind") not in {"personal", "team"}:
+    if raw.get("schema_version") not in {1, 2} or raw.get("kind") not in {"personal", "team"}:
         raise VaultError("Unsupported vault schema or kind")
     return raw
 
@@ -68,7 +68,10 @@ def add_vault(
                 directory.mkdir(parents=True, exist_ok=True)
                 keep = directory / ".gitkeep"
                 keep.write_text("", encoding="utf-8")
-            paths = [manifest, *sorted((destination / "memories").rglob(".gitkeep"))]
+            events_keep = destination / "events" / "v2" / ".gitkeep"
+            events_keep.parent.mkdir(parents=True, exist_ok=True)
+            events_keep.write_text("", encoding="utf-8")
+            paths = [manifest, events_keep, *sorted((destination / "memories").rglob(".gitkeep"))]
             commit_paths(destination, paths, "Initialize emu-ai-mem vault")
             result = sync_vault(name, destination)
             if result.startswith("pending"):

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "emu-ai-mem"
-version = "0.2.1"
+dynamic = ["version"]
 description = "Git-backed, multi-vault memory for AI coding agents and teams"
 readme = "README.md"
 requires-python = ">=3.11,<3.13"
@@ -18,7 +18,6 @@ classifiers = [
   "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
-  "fastembed>=0.7,<0.8",
   "filelock>=3.16,<4",
   "mcp>=1.27,<2",
   "platformdirs>=4.3,<5",
@@ -26,6 +25,8 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+semantic = ["fastembed>=0.7,<0.8", "numpy>=1.26,<3"]
+gateway = ["cryptography>=46,<47", "httpx>=0.28,<1", "uvicorn>=0.31,<1"]
 dev = [
   "build>=1.2,<2",
   "mypy>=1.13,<2",
@@ -44,6 +45,9 @@ Issues = "https://github.com/emu479p01/emu-ai-mem/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/emu_ai_mem"]
+
+[tool.hatch.version]
+path = "src/emu_ai_mem/__init__.py"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

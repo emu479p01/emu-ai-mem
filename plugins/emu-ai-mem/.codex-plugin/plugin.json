@@ -1,6 +1,6 @@
 {
   "name": "emu-ai-mem",
-  "version": "0.2.0",
+  "version": "2.0.0",
   "description": "Shared, Git-backed memory and local MCP tools for Codex sessions and small teams",
   "author": {
     "name": "Chaiyaporn Santangjai",

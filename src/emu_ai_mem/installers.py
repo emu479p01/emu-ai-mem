@@ -51,6 +51,8 @@ def install_claude_desktop(
         if not isinstance(loaded, dict):
             raise ConfigurationError(f"Claude Desktop config must contain a JSON object: {target}")
         payload = loaded
+        backup = target.with_suffix(target.suffix + ".bak")
+        shutil.copy2(target, backup)
 
     servers = payload.setdefault("mcpServers", {})
     if not isinstance(servers, dict):
@@ -62,5 +64,24 @@ def install_claude_desktop(
     temporary.write_text(
         json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
+    os.replace(temporary, target)
+    return target
+
+
+def remove_claude_desktop(config_file: Path | None = None) -> Path:
+    """Remove only emu-ai-mem's MCP entry, preserving all other client settings."""
+    target = (config_file or claude_desktop_config_path()).expanduser().resolve()
+    if not target.exists():
+        return target
+    loaded = json.loads(target.read_text(encoding="utf-8"))
+    if not isinstance(loaded, dict):
+        raise ConfigurationError(f"Claude Desktop config must contain an object: {target}")
+    backup = target.with_suffix(target.suffix + ".bak")
+    shutil.copy2(target, backup)
+    servers = loaded.get("mcpServers")
+    if isinstance(servers, dict):
+        servers.pop(SERVER_NAME, None)
+    temporary = target.with_suffix(target.suffix + ".tmp")
+    temporary.write_text(json.dumps(loaded, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     os.replace(temporary, target)
     return target

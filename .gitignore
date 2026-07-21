@@ -16,6 +16,8 @@ __pycache__/
 dist/
 build/
 *.egg-info/
+.env
+deploy/.env
 
 # Existing personal ai-mem data is a local migration source, never Engine source.
 memories/

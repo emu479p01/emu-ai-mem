@@ -3,6 +3,7 @@ from __future__ import annotations
 import getpass
 import os
 import re
+import shutil
 import socket
 import tomllib
 import uuid
@@ -55,15 +56,18 @@ def default_config() -> AppConfig:
 
 
 def load_config(*, create: bool = True) -> AppConfig:
-    ensure_app_dirs()
     path = config_path()
     if not path.exists():
         config = default_config()
         if create:
+            ensure_app_dirs()
             save_config(config)
         return config
     try:
         raw = tomllib.loads(path.read_text(encoding="utf-8"))
+        schema_version = int(raw.get("schema_version", 1))
+        if schema_version not in {1, 2}:
+            raise ConfigurationError(f"Unsupported config schema_version: {schema_version}")
         identity = raw["identity"]
         settings = raw.get("settings", {})
         vaults = {
@@ -84,6 +88,8 @@ def load_config(*, create: bool = True) -> AppConfig:
             embed_dim=int(settings.get("embed_dim", DEFAULT_EMBED_DIM)),
             vaults=vaults,
         )
+    except ConfigurationError:
+        raise
     except (KeyError, TypeError, ValueError, tomllib.TOMLDecodeError) as exc:
         raise ConfigurationError(f"Invalid config file {path}: {exc}") from exc
 
@@ -91,7 +97,7 @@ def load_config(*, create: bool = True) -> AppConfig:
 def save_config(config: AppConfig) -> None:
     ensure_app_dirs()
     lines = [
-        "schema_version = 1",
+        "schema_version = 2",
         "",
         "[identity]",
         f"author_id = {_quote(config.author_id)}",
@@ -115,6 +121,15 @@ def save_config(config: AppConfig) -> None:
             ]
         )
     target = config_path()
+    if target.exists():
+        try:
+            previous = tomllib.loads(target.read_text(encoding="utf-8"))
+        except tomllib.TOMLDecodeError:
+            previous = {}
+        if previous.get("schema_version", 1) == 1:
+            backup = target.with_suffix(target.suffix + ".v1.bak")
+            if not backup.exists():
+                shutil.copy2(target, backup)
     tmp = target.with_suffix(".tmp")
     tmp.write_text("\n".join(lines) + "\n", encoding="utf-8")
     os.replace(tmp, target)
