@@ -11,7 +11,8 @@ from .config import load_config, save_config
 from .errors import EmuMemError
 from .gitops import sync_vault
 from .index import rebuild_index, search_index
-from .services import doctor, find_record, hook, install_generic, migrate_legacy, remember
+from .installers import install_claude_desktop
+from .services import doctor, find_record, hook, install_generic, migrate_legacy, note, remember
 from .vaults import add_vault, remove_vault, resolve_vault, set_default
 
 
@@ -62,6 +63,18 @@ def build_parser() -> argparse.ArgumentParser:
 
     remember_parser = sub.add_parser("remember", help="Create an append-only memory")
     _add_memory_args(remember_parser)
+    note_parser = sub.add_parser(
+        "note", help="Save an explicit note without depending on the current folder"
+    )
+    note_parser.add_argument("text")
+    note_parser.add_argument("--project", default="general")
+    note_parser.add_argument("--tags", default="")
+    note_parser.add_argument("--details", default="")
+    note_parser.add_argument(
+        "--category", choices=["projects", "sessions", "decisions"], default="sessions"
+    )
+    note_parser.add_argument("--vault")
+    note_parser.add_argument("--no-sync", action="store_true")
     supersede = sub.add_parser("supersede", help="Create a replacement for an existing memory")
     supersede.add_argument("memory_id")
     _add_memory_args(supersede)
@@ -88,6 +101,12 @@ def build_parser() -> argparse.ArgumentParser:
     install_sub = install.add_subparsers(dest="install_command", required=True)
     generic = install_sub.add_parser("generic")
     generic.add_argument("--project", type=Path, default=Path.cwd())
+    claude_desktop = install_sub.add_parser(
+        "claude-desktop", help="Install the user-wide local MCP server for Claude Desktop"
+    )
+    claude_desktop.add_argument("--config", type=Path)
+
+    sub.add_parser("mcp", help="Run the local Model Context Protocol server over stdio")
 
     hook_parser = sub.add_parser("hook", help=argparse.SUPPRESS)
     hook_parser.add_argument("event", choices=["session-start", "prompt", "pre-compact", "stop"])
@@ -115,6 +134,18 @@ def dispatch(args: argparse.Namespace) -> int:
         elif output and args.client == "plain":
             print(output)
         return code
+
+    if args.command == "mcp":
+        from .mcp_server import run_mcp_server
+
+        run_mcp_server()
+        return 0
+
+    if args.command == "install" and args.install_command == "claude-desktop":
+        target = install_claude_desktop(args.config)
+        print(f"Configured Claude Desktop local MCP: {target}")
+        print("Restart Claude Desktop, enable emu-ai-mem, and allow write tools when prompted.")
+        return 0
 
     config = load_config()
     if args.command == "config":
@@ -150,6 +181,20 @@ def dispatch(args: argparse.Namespace) -> int:
         else:
             set_default(config, args.name)
             print(f"Default vault: {args.name}")
+        return 0
+
+    if args.command == "note":
+        path, status = note(
+            config,
+            args.text,
+            project=args.project,
+            tags=_tags(args.tags),
+            details=args.details,
+            category=args.category,
+            vault_name=args.vault,
+            auto_sync=not args.no_sync,
+        )
+        print(f"Wrote {path}\nSync: {status}")
         return 0
 
     if args.command in {"remember", "supersede"}:

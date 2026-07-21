@@ -2,7 +2,7 @@
 
 This guide covers a new installation, the first team setup, additional team members,
 multiple devices per person, multiple teams, and multiple projects. It targets
-emu-ai-mem v0.1.0 and teams of 1–20 people per memory repository.
+emu-ai-mem v0.2.0 and teams of 1–20 people per memory repository.
 
 ## 1. Understand the layout before installing
 
@@ -73,14 +73,14 @@ store GitHub tokens.
 Install the tagged release, not the moving `main` branch:
 
 ```bash
-pipx install "git+https://github.com/emu479p01/emu-ai-mem.git@v0.1.0"
+pipx install "git+https://github.com/emu479p01/emu-ai-mem.git@v0.2.0"
 emu-mem --version
 ```
 
 Expected output:
 
 ```text
-0.1.0
+0.2.0
 ```
 
 Each device has its own local configuration, vault clones, SQLite index, model cache,
@@ -276,7 +276,7 @@ emu-mem vault add development-team <DEVELOPMENT-REPO-URL> --kind team
 emu-mem vault list
 ```
 
-There is one default vault per local device in v0.1.0. When several team vaults are
+There is one default vault per local device in v0.2.0. When several team vaults are
 configured, explicitly pass `--vault` for writes to avoid sharing a memory with the
 wrong team:
 
@@ -395,7 +395,22 @@ emu-mem doctor
 
 Run `emu-mem reindex` when release notes say the model or index format changed.
 
-## 15. Onboarding and offboarding checklist
+## 15. Use Claude Desktop chat without a project folder
+
+On each Windows or macOS device that should expose its local vaults to the normal Claude Desktop
+chat, run:
+
+```bash
+emu-mem install claude-desktop
+```
+
+Restart Claude Desktop, enable the `emu-ai-mem` local connector, and ask Claude to "note this".
+Claude must request approval before a write tool runs. The connector uses that device's identity,
+default vault, clones, and Git credentials; it does not depend on the chat's current folder.
+
+This is local MCP. It is unavailable in claude.ai web, Cowork, remote sessions, and mobile apps.
+
+## 16. Onboarding and offboarding checklist
 
 ### Onboarding
 
@@ -413,7 +428,7 @@ Run `emu-mem reindex` when release notes say the model or index format changed.
 - Ask the departing member to remove local vault configurations and clones.
 - Do not rewrite existing authored memories; append-only history preserves attribution.
 
-## 16. Troubleshooting
+## 17. Troubleshooting
 
 ### `emu-mem` is not found
 

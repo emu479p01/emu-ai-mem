@@ -21,7 +21,7 @@ central knowledge service at larger scale.
 Python 3.11 or 3.12 and Git are required.
 
 ```bash
-pipx install "git+https://github.com/emu479p01/emu-ai-mem.git@v0.1.0"
+pipx install "git+https://github.com/emu479p01/emu-ai-mem.git@v0.2.0"
 emu-mem --version
 ```
 
@@ -39,6 +39,9 @@ emu-mem doctor
 ## Use
 
 ```bash
+emu-mem note "Use idempotency keys for charge creation" \
+  --project billing --tags decision,api --category decisions
+
 emu-mem remember --project billing --tags decision,api \
   --summary "Use idempotency keys for charge creation" \
   --details "Clients generate one UUID per attempted charge."
@@ -51,6 +54,10 @@ emu-mem supersede <old-id> --project billing --tags decision \
 
 emu-mem sync
 ```
+
+`note` is the folder-independent shortcut for content the user explicitly selected. It uses
+`project=general` and `category=sessions` when those options are omitted, while still requiring an
+explicitly configured default vault or `--vault`.
 
 Writes require an explicit default vault or `--vault`. Search uses all configured
 vaults by default and labels every result with its origin. Synced files are
@@ -89,6 +96,17 @@ before deleting the old files.
 - Codex marketplace: `.agents/plugins/marketplace.json`
 - Claude Code marketplace: `.claude-plugin/marketplace.json`
 - Other agents: `emu-mem install generic --project /path/to/project`
+
+For folder-independent access from the normal Claude Desktop chat, install the user-wide local
+MCP entry and restart Claude Desktop:
+
+```bash
+emu-mem install claude-desktop
+```
+
+The local MCP server exposes `note_memory`, `search_memory`, `supersede_memory`, `sync_memory`,
+`list_vaults`, and `doctor_memory`. It runs over stdio on the same computer and does not expose a
+network port. Claude.ai web and mobile cannot connect to this local server.
 
 Plugins call the installed `emu-mem` executable. They sync at session start,
 retrieve relevant context for prompts, and remind the agent to save durable facts.

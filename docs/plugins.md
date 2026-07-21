@@ -3,7 +3,7 @@
 Install the CLI first:
 
 ```bash
-pipx install "git+https://github.com/emu479p01/emu-ai-mem.git@v0.1.0"
+pipx install "git+https://github.com/emu479p01/emu-ai-mem.git@v0.2.0"
 emu-mem doctor
 ```
 
@@ -29,6 +29,28 @@ Plugins run `emu-mem hook` from PATH. `SessionStart` syncs configured vaults and
 rebuilds the local index. `UserPromptSubmit` retrieves up to three relevant summaries.
 `PreCompact` and `Stop` only remind the agent to persist durable context; they do not
 save raw transcripts.
+
+Both plugins also start the bundled local stdio MCP server with `emu-mem mcp`. Ask the agent to
+"note this" or invoke `/emu-ai-mem:note` to call `note_memory`. MCP access uses the user-level
+emu-ai-mem configuration and is independent of the current project folder.
+
+## Claude Desktop normal chat
+
+Install an absolute-path MCP entry in the per-user Claude Desktop configuration:
+
+```bash
+emu-mem install claude-desktop
+```
+
+Restart Claude Desktop, open Settings > Connectors, and enable `emu-ai-mem`. Then ask:
+
+```text
+Note this in my personal memory: future releases use AGPL v3; existing MIT releases remain MIT.
+```
+
+Claude should request approval for the `note_memory` write tool and report the vault, memory ID,
+and sync status. This local connector works only on the computer where the CLI and vaults are
+configured. It is not available to claude.ai web, Cowork, remote sessions, or mobile clients.
 
 ## Other agents
 

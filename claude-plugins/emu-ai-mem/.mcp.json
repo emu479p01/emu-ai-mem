@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "emu-ai-mem": {
+      "command": "emu-mem",
+      "args": ["mcp"]
+    }
+  }
+}

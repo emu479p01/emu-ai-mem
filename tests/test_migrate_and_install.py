@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import json
 import subprocess
 from pathlib import Path
 
 from emu_ai_mem.config import AppConfig, VaultConfig
+from emu_ai_mem.installers import install_claude_desktop
 from emu_ai_mem.services import install_generic, migrate_legacy
 
 
@@ -11,6 +13,32 @@ def test_generic_installer(tmp_path: Path) -> None:
     path = install_generic(tmp_path)
     assert path == tmp_path / ".emu-ai-mem" / "AGENT_INSTRUCTIONS.md"
     assert "emu-mem search" in path.read_text(encoding="utf-8")
+
+
+def test_claude_desktop_installer_preserves_existing_servers(tmp_path: Path) -> None:
+    config_file = tmp_path / "Claude" / "claude_desktop_config.json"
+    config_file.parent.mkdir()
+    config_file.write_text(
+        json.dumps(
+            {
+                "theme": "dark",
+                "mcpServers": {"existing": {"command": "existing-tool", "args": []}},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    installed = install_claude_desktop(
+        config_file, executable=tmp_path / "pipx" / "emu-mem.exe"
+    )
+
+    payload = json.loads(installed.read_text(encoding="utf-8"))
+    assert payload["theme"] == "dark"
+    assert payload["mcpServers"]["existing"]["command"] == "existing-tool"
+    assert payload["mcpServers"]["emu-ai-mem"] == {
+        "command": str((tmp_path / "pipx" / "emu-mem.exe").resolve()),
+        "args": ["mcp"],
+    }
 
 
 def test_migrate_legacy_without_modifying_source(tmp_path: Path, monkeypatch) -> None:

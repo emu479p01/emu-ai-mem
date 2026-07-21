@@ -45,6 +45,33 @@ def remember(
     return path, sync_status
 
 
+def note(
+    config: AppConfig,
+    text: str,
+    *,
+    project: str = "general",
+    tags: list[str] | None = None,
+    details: str = "",
+    category: str = "sessions",
+    vault_name: str | None = None,
+    auto_sync: bool = True,
+) -> tuple[Path, str]:
+    """Persist an explicitly selected note without depending on a working directory."""
+    summary = text.strip()
+    if not summary:
+        raise RecordError("Note text cannot be empty")
+    return remember(
+        config,
+        project=project.strip() or "general",
+        tags=tags or [],
+        summary=summary,
+        details=details,
+        category=category,
+        vault_name=vault_name,
+        auto_sync=auto_sync,
+    )
+
+
 def find_record(
     config: AppConfig, memory_id: str, vault_name: str | None = None
 ) -> tuple[str, MemoryRecord]:
@@ -110,7 +137,9 @@ Before unfamiliar work, run `emu-mem search \"<topic>\"` and use relevant result
 
 At natural checkpoints, save durable project facts or decisions with:
 
-`emu-mem remember --project <name> --tags <comma-separated> --summary \"...\" --details \"...\"`
+`emu-mem note \"<durable fact or decision>\" --project <name> --tags <comma-separated>`
+
+Use `emu-mem remember` when separate summary and details fields are useful.
 
 Use `emu-mem supersede <id> ...` instead of editing a synced memory file. Never copy raw
 transcripts or secrets into shared memory. Run `emu-mem doctor` when sync or configuration fails.
@@ -191,7 +220,7 @@ def hook(event: str, stdin_text: str) -> tuple[int, str]:
             return 0, f"emu-ai-mem search warning: {exc}"
     if event in {"pre-compact", "stop"}:
         return 0, (
-            "Before context is lost, save only durable facts or decisions with `emu-mem remember`. "
+            "Before context is lost, save only durable facts or decisions with `emu-mem note`. "
             "Do not store raw transcripts or secrets."
         )
     return 0, ""

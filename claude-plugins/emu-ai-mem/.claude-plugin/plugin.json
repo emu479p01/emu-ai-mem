@@ -1,7 +1,7 @@
 {
   "name": "emu-ai-mem",
-  "version": "0.1.0",
-  "description": "Shared, Git-backed memory for Claude Code sessions and small teams",
+  "version": "0.2.0",
+  "description": "Shared, Git-backed memory and local MCP tools for Claude sessions and small teams",
   "author": {
     "name": "Chaiyaporn Santangjai"
   },
@@ -10,4 +10,3 @@
   "license": "MIT",
   "keywords": ["memory", "git", "team", "multilingual"]
 }
-

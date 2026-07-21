@@ -1,7 +1,7 @@
 {
   "name": "emu-ai-mem",
-  "version": "0.1.0",
-  "description": "Shared, Git-backed memory for Codex sessions and small teams",
+  "version": "0.2.0",
+  "description": "Shared, Git-backed memory and local MCP tools for Codex sessions and small teams",
   "author": {
     "name": "Chaiyaporn Santangjai",
     "url": "https://github.com/emu479p01"
@@ -11,14 +11,17 @@
   "license": "MIT",
   "keywords": ["memory", "git", "team", "multilingual"],
   "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "emu-ai-mem",
-    "shortDescription": "Use Git-backed team memory in Codex.",
-    "longDescription": "Sync personal and team memory vaults, retrieve relevant context, and save durable decisions from Codex.",
+    "shortDescription": "Use Git-backed memory through CLI and MCP.",
+    "longDescription": "Search, note, sync, and supersede personal and team memories through folder-independent local MCP tools.",
     "developerName": "Chaiyaporn Santangjai",
     "category": "Productivity",
     "capabilities": ["Interactive", "Read", "Write"],
-    "defaultPrompt": "Search emu-ai-mem for context relevant to this task."
+    "defaultPrompt": [
+      "Search emu-ai-mem for context relevant to this task.",
+      "Note this durable decision in my default memory vault."
+    ]
   }
 }
-
