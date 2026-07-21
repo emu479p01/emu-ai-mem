@@ -25,6 +25,20 @@ codex plugin add emu-ai-mem@emu-ai-mem
 /reload-plugins
 ```
 
+When a new release changes the plugin, bump the version in `pyproject.toml`,
+`.claude-plugin/marketplace.json`, and `claude-plugins/emu-ai-mem/.claude-plugin/plugin.json`
+to the same value, then push the commit and tag it. On an existing installation, refresh and
+update the plugin explicitly:
+
+```text
+/plugin marketplace update emu-ai-mem
+/plugin update emu-ai-mem@emu-ai-mem
+```
+
+`/reload-plugins` reloads the current cached plugin; it does not fetch a new marketplace
+version. Claude Code uses the plugin version as its cache key, so pushing new commits without
+changing the version does not trigger an update.
+
 Plugins run `emu-mem hook` from PATH. `SessionStart` syncs configured vaults and
 rebuilds the local index. `UserPromptSubmit` retrieves up to three relevant summaries.
 `PreCompact` and `Stop` only remind the agent to persist durable context; they do not
