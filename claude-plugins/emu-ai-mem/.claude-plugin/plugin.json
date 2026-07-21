@@ -1,0 +1,13 @@
+{
+  "name": "emu-ai-mem",
+  "version": "0.1.0",
+  "description": "Shared, Git-backed memory for Claude Code sessions and small teams",
+  "author": {
+    "name": "Chaiyaporn Santangjai"
+  },
+  "homepage": "https://github.com/emu479p01/emu-ai-mem",
+  "repository": "https://github.com/emu479p01/emu-ai-mem",
+  "license": "MIT",
+  "keywords": ["memory", "git", "team", "multilingual"]
+}
+

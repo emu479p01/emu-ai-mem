@@ -1,0 +1,52 @@
+{
+  "description": "Load and preserve emu-ai-mem context without storing raw transcripts.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "emu-mem hook session-start --client claude",
+            "timeout": 120,
+            "statusMessage": "Syncing emu-ai-mem vaults"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "emu-mem hook prompt --client claude",
+            "timeout": 120,
+            "statusMessage": "Searching emu-ai-mem"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "emu-mem hook pre-compact --client claude",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "emu-mem hook stop --client claude",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}

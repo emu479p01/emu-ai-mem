@@ -1,0 +1,17 @@
+{
+  "name": "emu-ai-mem",
+  "owner": {
+    "name": "Chaiyaporn Santangjai"
+  },
+  "description": "Git-backed personal and team memory integrations for Claude Code",
+  "plugins": [
+    {
+      "name": "emu-ai-mem",
+      "source": "./claude-plugins/emu-ai-mem",
+      "description": "Shared, Git-backed memory for Claude Code sessions and small teams",
+      "version": "0.1.0",
+      "category": "productivity",
+      "tags": ["memory", "git", "team", "multilingual"]
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "name": "emu-ai-mem",
+  "version": "0.1.0",
+  "description": "Shared, Git-backed memory for Codex sessions and small teams",
+  "author": {
+    "name": "Chaiyaporn Santangjai",
+    "url": "https://github.com/emu479p01"
+  },
+  "homepage": "https://github.com/emu479p01/emu-ai-mem",
+  "repository": "https://github.com/emu479p01/emu-ai-mem",
+  "license": "MIT",
+  "keywords": ["memory", "git", "team", "multilingual"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "emu-ai-mem",
+    "shortDescription": "Use Git-backed team memory in Codex.",
+    "longDescription": "Sync personal and team memory vaults, retrieve relevant context, and save durable decisions from Codex.",
+    "developerName": "Chaiyaporn Santangjai",
+    "category": "Productivity",
+    "capabilities": ["Interactive", "Read", "Write"],
+    "defaultPrompt": "Search emu-ai-mem for context relevant to this task."
+  }
+}
+

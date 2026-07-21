@@ -1,0 +1,62 @@
+[build-system]
+requires = ["hatchling>=1.26"]
+build-backend = "hatchling.build"
+
+[project]
+name = "emu-ai-mem"
+version = "0.1.0"
+description = "Git-backed, multi-vault memory for AI coding agents and teams"
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+license = { file = "LICENSE" }
+authors = [{ name = "Chaiyaporn Santangjai" }]
+keywords = ["ai", "memory", "git", "codex", "claude"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+  "fastembed>=0.7,<0.8",
+  "filelock>=3.16,<4",
+  "platformdirs>=4.3,<5",
+  "python-frontmatter>=1.1,<2",
+]
+
+[project.optional-dependencies]
+dev = [
+  "build>=1.2,<2",
+  "mypy>=1.13,<2",
+  "pytest>=8.3,<9",
+  "pytest-cov>=6,<7",
+  "ruff>=0.9,<1",
+]
+
+[project.scripts]
+emu-mem = "emu_ai_mem.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/emu479p01/emu-ai-mem"
+Repository = "https://github.com/emu479p01/emu-ai-mem"
+Issues = "https://github.com/emu479p01/emu-ai-mem/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/emu_ai_mem"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+packages = ["emu_ai_mem"]

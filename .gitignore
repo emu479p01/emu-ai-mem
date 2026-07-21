@@ -1,0 +1,21 @@
+index.db
+index.db-wal
+index.db-shm
+index.db-journal
+*.db
+*.db-wal
+*.db-shm
+*.db-journal
+.venv/
+__pycache__/
+*.pyc
+.pending-push
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+dist/
+build/
+*.egg-info/
+
+# Existing personal ai-mem data is a local migration source, never Engine source.
+memories/
