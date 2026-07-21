@@ -28,7 +28,8 @@ jobs:
       - run: python -m pip install -e ".[dev]"
       - run: python -m pytest --cov=emu_ai_mem --cov-report=term-missing
       - run: python -m ruff check .
-      - run: python -m mypy src/emu_ai_mem
+      - if: matrix.python-version == '3.11'
+        run: python -m mypy src/emu_ai_mem
       - run: python -m build
 
   plugin-validation:
@@ -50,4 +51,3 @@ jobs:
               assert text.startswith('---\n')
               assert '\nname:' in text and '\ndescription:' in text
           print('Plugin JSON and skill metadata are valid')
-
